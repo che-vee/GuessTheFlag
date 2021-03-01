@@ -17,10 +17,8 @@ struct FlagImage: View {
             .clipShape(RoundedRectangle(cornerRadius: 15))
             .overlay(RoundedRectangle(cornerRadius: 15).stroke(Color.clear, lineWidth: 0.1))
             .shadow(color: .black, radius: 0.2)
-        
     }
 }
-
 
 struct ContentView: View {
     @State private var countries = ["Estonia", "France", "Germany", "Ireland", "Italy", "Nigeria", "Poland", "Russia", "Spain", "UK", "US"].shuffled()
@@ -30,6 +28,10 @@ struct ContentView: View {
     @State private var scoreTitle = ""
     @State private var scoreMessage = ""
     @State private var scoreTotal = 0
+    
+    @State private var animationAmount = 0.0
+    @State private var wrongAnswerOpacity = 1.0
+
     
     var body: some View {
         ZStack {
@@ -49,14 +51,24 @@ struct ContentView: View {
                 
                 ForEach(0..<3) { number in
                     Button(action: {
-                        self.flagTapped(number)
+                        withAnimation {
+                            self.flagTapped(number)
+                            if number == correctAnswer {
+                                self.animationAmount += 360
+                            }
+                            self.wrongAnswerOpacity = 0.25
+                            
+                        }
                     }) {
                         FlagImage(country: self.countries[number])
-                           
-
+                            .rotation3DEffect(
+                                .degrees(number == correctAnswer ? animationAmount : 0),
+                                axis: (x: 0.0, y: 1.0, z: 0.0))
+                            .opacity(number == correctAnswer ? 1 : wrongAnswerOpacity)
                     }
+                    
                 }
-                
+            
                 VStack {
                     Text("Current score: \(scoreTotal)")
                         .foregroundColor(.white)
@@ -77,19 +89,21 @@ struct ContentView: View {
             scoreTitle = "Correct"
             scoreTotal += 1
             scoreMessage = "Your score is \(scoreTotal)"
+            
         } else {
             scoreTitle = "Oops! ☹️"
             scoreMessage = "That's the flag of \(countries[number])"
         }
         
-        showingScore = true
+        self.showingScore = true
     }
     
     func askQuestion() {
         countries.shuffle()
         correctAnswer = Int.random(in: 0...2)
+        wrongAnswerOpacity = 1.0
+
     }
-    
 }
 
 struct ContentView_Previews: PreviewProvider {
